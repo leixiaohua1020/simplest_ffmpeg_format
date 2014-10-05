@@ -1,0 +1,38 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "simplest_ffmpeg_remuxer", "simplest_ffmpeg_remuxer\simplest_ffmpeg_remuxer.vcxproj", "{94AAED3E-AA97-43C8-BA30-BCB7E2E2266B}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "simplest_ffmpeg_muxer", "simplest_ffmpeg_muxer\simplest_ffmpeg_muxer.vcxproj", "{56C91142-768B-4A9A-8A6D-929D026C4F12}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "simplest_ffmpeg_demuxer", "simplest_ffmpeg_demuxer\simplest_ffmpeg_demuxer.vcxproj", "{C0B09900-DF1A-4CDD-884F-1E57351128A6}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "simplest_ffmpeg_demuxer_simple", "simplest_ffmpeg_demuxer_simple\simplest_ffmpeg_demuxer_simple.vcxproj", "{20281580-7E89-41B4-A6E1-B35266351929}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{94AAED3E-AA97-43C8-BA30-BCB7E2E2266B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{94AAED3E-AA97-43C8-BA30-BCB7E2E2266B}.Debug|Win32.Build.0 = Debug|Win32
+		{94AAED3E-AA97-43C8-BA30-BCB7E2E2266B}.Release|Win32.ActiveCfg = Release|Win32
+		{94AAED3E-AA97-43C8-BA30-BCB7E2E2266B}.Release|Win32.Build.0 = Release|Win32
+		{56C91142-768B-4A9A-8A6D-929D026C4F12}.Debug|Win32.ActiveCfg = Debug|Win32
+		{56C91142-768B-4A9A-8A6D-929D026C4F12}.Debug|Win32.Build.0 = Debug|Win32
+		{56C91142-768B-4A9A-8A6D-929D026C4F12}.Release|Win32.ActiveCfg = Release|Win32
+		{56C91142-768B-4A9A-8A6D-929D026C4F12}.Release|Win32.Build.0 = Release|Win32
+		{C0B09900-DF1A-4CDD-884F-1E57351128A6}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C0B09900-DF1A-4CDD-884F-1E57351128A6}.Debug|Win32.Build.0 = Debug|Win32
+		{C0B09900-DF1A-4CDD-884F-1E57351128A6}.Release|Win32.ActiveCfg = Release|Win32
+		{C0B09900-DF1A-4CDD-884F-1E57351128A6}.Release|Win32.Build.0 = Release|Win32
+		{20281580-7E89-41B4-A6E1-B35266351929}.Debug|Win32.ActiveCfg = Debug|Win32
+		{20281580-7E89-41B4-A6E1-B35266351929}.Debug|Win32.Build.0 = Debug|Win32
+		{20281580-7E89-41B4-A6E1-B35266351929}.Release|Win32.ActiveCfg = Release|Win32
+		{20281580-7E89-41B4-A6E1-B35266351929}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
