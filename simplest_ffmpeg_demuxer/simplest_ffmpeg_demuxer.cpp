@@ -43,7 +43,9 @@ int main(int argc, char* argv[])
 	AVFormatContext *ifmt_ctx = NULL, *ofmt_ctx_a = NULL, *ofmt_ctx_v = NULL;
 	AVPacket pkt;
 	int ret, i;
-	
+	int videoindex=-1,audioindex=-1;
+	int frame_index=0;
+
 	char *in_filename  = "cuc_ieschool.ts";//输入文件名（Input file URL）
 	//char *in_filename  = "cuc_ieschool.mkv";
 	char *out_filename_v = "cuc_ieschool.h264";//输出文件名（Output file URL）
@@ -78,7 +80,6 @@ int main(int argc, char* argv[])
 	}
 	ofmt_a = ofmt_ctx_a->oformat;
 
-	int videoindex=-1,audioindex=-1;
 	for (i = 0; i < ifmt_ctx->nb_streams; i++) {
 			//根据输入流创建输出流（Create output AVStream according to input AVStream）
 			AVFormatContext *ofmt_ctx;
@@ -150,7 +151,6 @@ int main(int argc, char* argv[])
 	AVBitStreamFilterContext* h264bsfc =  av_bitstream_filter_init("h264_mp4toannexb"); 
 #endif
 
-	int frame_index=0;
 	while (1) {
 		AVFormatContext *ofmt_ctx;
 		AVStream *in_stream, *out_stream;

@@ -26,6 +26,7 @@ extern "C"
 {
 #include "libavformat/avformat.h"
 };
+
 /*
 FIX: H.264 in some container format (FLV, MP4, MKV etc.) need 
 "h264_mp4toannexb" bitstream filter (BSF)
@@ -53,9 +54,13 @@ int main(int argc, char* argv[])
 	AVFormatContext *ifmt_ctx_v = NULL, *ifmt_ctx_a = NULL,*ofmt_ctx = NULL;
 	AVPacket pkt;
 	int ret, i;
-	
-	char *in_filename_v = "cuc_ieschool.ts";//输入文件名（Input file URL）
-	//char *in_filename_v = "cuc_ieschool.h264";
+	int videoindex_v=-1,videoindex_out=-1;
+	int audioindex_a=-1,audioindex_out=-1;
+	int frame_index=0;
+	int64_t cur_pts_v=0,cur_pts_a=0;
+
+	//char *in_filename_v = "cuc_ieschool.ts";//输入文件名（Input file URL）
+	char *in_filename_v = "cuc_ieschool.h264";
 	//char *in_filename_a = "cuc_ieschool.mp3";
 	//char *in_filename_a = "gowest.m4a";
 	//char *in_filename_a = "gowest.aac";
@@ -93,13 +98,13 @@ int main(int argc, char* argv[])
 		goto end;
 	}
 	ofmt = ofmt_ctx->oformat;
-	int videoindex_v=-1,videoindex_out=-1;
+
 	for (i = 0; i < ifmt_ctx_v->nb_streams; i++) {
 		//根据输入流创建输出流（Create output AVStream according to input AVStream）
 		if(ifmt_ctx_v->streams[i]->codec->codec_type==AVMEDIA_TYPE_VIDEO){
-		videoindex_v=i;
 		AVStream *in_stream = ifmt_ctx_v->streams[i];
 		AVStream *out_stream = avformat_new_stream(ofmt_ctx, in_stream->codec->codec);
+		videoindex_v=i;
 		if (!out_stream) {
 			printf( "Failed allocating output stream\n");
 			ret = AVERROR_UNKNOWN;
@@ -118,13 +123,12 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	int audioindex_a=-1,audioindex_out=-1;
 	for (i = 0; i < ifmt_ctx_a->nb_streams; i++) {
 		//根据输入流创建输出流（Create output AVStream according to input AVStream）
 		if(ifmt_ctx_a->streams[i]->codec->codec_type==AVMEDIA_TYPE_AUDIO){
-			audioindex_a=i;
 			AVStream *in_stream = ifmt_ctx_a->streams[i];
 			AVStream *out_stream = avformat_new_stream(ofmt_ctx, in_stream->codec->codec);
+			audioindex_a=i;
 			if (!out_stream) {
 				printf( "Failed allocating output stream\n");
 				ret = AVERROR_UNKNOWN;
@@ -160,8 +164,7 @@ int main(int argc, char* argv[])
 		printf( "Error occurred when opening output file\n");
 		goto end;
 	}
-	int frame_index=0;
-	int64_t cur_pts_v=0,cur_pts_a=0;
+
 
 	//FIX
 #if USE_H264BSF
@@ -176,7 +179,6 @@ int main(int argc, char* argv[])
 		int stream_index=0;
 		AVStream *in_stream, *out_stream;
 
-
 		//获取一个AVPacket（Get an AVPacket）
 		if(av_compare_ts(cur_pts_v,ifmt_ctx_v->streams[videoindex_v]->time_base,cur_pts_a,ifmt_ctx_a->streams[audioindex_a]->time_base) <= 0){
 			ifmt_ctx=ifmt_ctx_v;
@@ -184,7 +186,24 @@ int main(int argc, char* argv[])
 
 			if(av_read_frame(ifmt_ctx, &pkt) >= 0){
 				do{
+					in_stream  = ifmt_ctx->streams[pkt.stream_index];
+					out_stream = ofmt_ctx->streams[stream_index];
+
 					if(pkt.stream_index==videoindex_v){
+						//FIX：No PTS (Example: Raw H.264)
+						//Simple Write PTS
+						if(pkt.pts==AV_NOPTS_VALUE){
+							//Write PTS
+							AVRational time_base1=in_stream->time_base;
+							//Duration between 2 frames (us)
+							int64_t calc_duration=(double)AV_TIME_BASE/av_q2d(in_stream->r_frame_rate);
+							//Parameters
+							pkt.pts=(double)(frame_index*calc_duration)/(double)(av_q2d(time_base1)*AV_TIME_BASE);
+							pkt.dts=pkt.pts;
+							pkt.duration=(double)calc_duration/(double)(av_q2d(time_base1)*AV_TIME_BASE);
+							frame_index++;
+						}
+
 						cur_pts_v=pkt.pts;
 						break;
 					}
@@ -197,8 +216,26 @@ int main(int argc, char* argv[])
 			stream_index=audioindex_out;
 			if(av_read_frame(ifmt_ctx, &pkt) >= 0){
 				do{
+					in_stream  = ifmt_ctx->streams[pkt.stream_index];
+					out_stream = ofmt_ctx->streams[stream_index];
+
 					if(pkt.stream_index==audioindex_a){
+
+						//FIX：No PTS
+						//Simple Write PTS
+						if(pkt.pts==AV_NOPTS_VALUE){
+							//Write PTS
+							AVRational time_base1=in_stream->time_base;
+							//Duration between 2 frames (us)
+							int64_t calc_duration=(double)AV_TIME_BASE/av_q2d(in_stream->r_frame_rate);
+							//Parameters
+							pkt.pts=(double)(frame_index*calc_duration)/(double)(av_q2d(time_base1)*AV_TIME_BASE);
+							pkt.dts=pkt.pts;
+							pkt.duration=(double)calc_duration/(double)(av_q2d(time_base1)*AV_TIME_BASE);
+							frame_index++;
+						}
 						cur_pts_a=pkt.pts;
+
 						break;
 					}
 				}while(av_read_frame(ifmt_ctx, &pkt) >= 0);
@@ -208,32 +245,21 @@ int main(int argc, char* argv[])
 
 		}
 
-		in_stream  = ifmt_ctx->streams[pkt.stream_index];
-		out_stream = ofmt_ctx->streams[stream_index];
-//FIX
+
+		//FIX:Bitstream Filter
 #if USE_H264BSF
 		av_bitstream_filter_filter(h264bsfc, in_stream->codec, NULL, &pkt.data, &pkt.size, pkt.data, pkt.size, 0);
 #endif
 #if USE_AACBSF
-		av_bitstream_filter_filter(aacbsfc, in_stream->codec, NULL, &pkt.data, &pkt.size, pkt.data, pkt.size, 0);
+		av_bitstream_filter_filter(aacbsfc, out_stream->codec, NULL, &pkt.data, &pkt.size, pkt.data, pkt.size, 0);
 #endif
-		//FIX：No PTS (Example: Raw H.264)
-		//Simple Write PTS
-		if(pkt.pts==AV_NOPTS_VALUE){
-			//Write PTS
-			AVRational time_base1=in_stream->time_base;
-			//Duration between 2 frames (us)
-			int64_t calc_duration=(double)AV_TIME_BASE/av_q2d(in_stream->r_frame_rate);
-			//Parameters
-			pkt.pts=(double)(frame_index*calc_duration)/(double)(av_q2d(time_base1)*AV_TIME_BASE);
-			pkt.dts=pkt.pts;
-			pkt.duration=(double)calc_duration/(double)(av_q2d(time_base1)*AV_TIME_BASE);
-			frame_index++;
-		}
+
+
+
 		/* copy packet */
 		//转换PTS/DTS（Convert PTS/DTS）
-			pkt.pts = av_rescale_q_rnd(pkt.pts, in_stream->time_base, out_stream->time_base, (AVRounding)(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
-			pkt.dts = av_rescale_q_rnd(pkt.dts, in_stream->time_base, out_stream->time_base, (AVRounding)(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+		pkt.pts = av_rescale_q_rnd(pkt.pts, in_stream->time_base, out_stream->time_base, (AVRounding)(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+		pkt.dts = av_rescale_q_rnd(pkt.dts, in_stream->time_base, out_stream->time_base, (AVRounding)(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 		pkt.duration = av_rescale_q(pkt.duration, in_stream->time_base, out_stream->time_base);
 		pkt.pos = -1;
 		pkt.stream_index=stream_index;

@@ -8,7 +8,7 @@ Communication University of China / Digital TV Technology
 http://blog.csdn.net/leixiaohua1020
 
 本程序可以将封装格式中的视频码流数据和音频码流数据分离出来。
-在该例子中， 将MPEG2TS的文件分离得到H.264视频码流文件和MP3
+在该例子中， 将FLV的文件分离得到H.264视频码流文件和MP3
 音频码流文件。
 
 注意：
@@ -22,7 +22,7 @@ FLV/MP4/MKV等格式中的AAC码流（上述封装格式中的AAC的AVPacket中
 
 This software split a media file (in Container such as 
 MKV, FLV, AVI...) to video and audio bitstream.
-In this example, it demux a MPEG2TS file to H.264 bitstream
+In this example, it demux a FLV file to H.264 bitstream
 and MP3 bitstream.
 Note:
 This is a simple version of "Simplest FFmpeg Demuxer". It is 

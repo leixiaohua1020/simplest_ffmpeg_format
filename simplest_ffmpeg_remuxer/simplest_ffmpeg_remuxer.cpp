@@ -34,9 +34,10 @@ int main(int argc, char* argv[])
 	AVPacket pkt;
 	const char *in_filename, *out_filename;
 	int ret, i;
-
+	int frame_index=0;
 	in_filename  = "cuc_ieschool1.flv";//输入文件名（Input file URL）
 	out_filename = "cuc_ieschool1.mp4";//输出文件名（Output file URL）
+
 	av_register_all();
 	//输入（Input）
 	if ((ret = avformat_open_input(&ifmt_ctx, in_filename, 0, 0)) < 0) {
@@ -89,7 +90,7 @@ int main(int argc, char* argv[])
 		printf( "Error occurred when opening output file\n");
 		goto end;
 	}
-	int frame_index=0;
+
 	while (1) {
 		AVStream *in_stream, *out_stream;
 		//获取一个AVPacket（Get an AVPacket）
