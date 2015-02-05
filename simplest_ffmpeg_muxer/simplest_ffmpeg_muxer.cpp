@@ -22,10 +22,25 @@
 
 #include <stdio.h>
 
+#define __STDC_CONSTANT_MACROS
+
+#ifdef _WIN32
+//Windows
 extern "C"
 {
 #include "libavformat/avformat.h"
 };
+#else
+//Linux...
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+#include <libavformat/avformat.h>
+#ifdef __cplusplus
+};
+#endif
+#endif
 
 /*
 FIX: H.264 in some container format (FLV, MP4, MKV etc.) need 
