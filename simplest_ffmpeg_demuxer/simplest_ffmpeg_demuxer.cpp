@@ -53,7 +53,6 @@ H.264 in some container (MPEG2TS) don't need this BSF.
 int main(int argc, char* argv[])
 {
 	AVOutputFormat *ofmt_a = NULL,*ofmt_v = NULL;
-	//输入对应一个AVFormatContext，输出对应一个AVFormatContext
 	//（Input AVFormatContext and Output AVFormatContext）
 	AVFormatContext *ifmt_ctx = NULL, *ofmt_ctx_a = NULL, *ofmt_ctx_v = NULL;
 	AVPacket pkt;
@@ -61,14 +60,14 @@ int main(int argc, char* argv[])
 	int videoindex=-1,audioindex=-1;
 	int frame_index=0;
 
-	char *in_filename  = "cuc_ieschool.ts";//输入文件名（Input file URL）
+	const char *in_filename  = "cuc_ieschool.ts";//Input file URL
 	//char *in_filename  = "cuc_ieschool.mkv";
-	char *out_filename_v = "cuc_ieschool.h264";//输出文件名（Output file URL）
+	const char *out_filename_v = "cuc_ieschool.h264";//Output file URL
 	//char *out_filename_a = "cuc_ieschool.mp3";
-	char *out_filename_a = "cuc_ieschool.aac";
+	const char *out_filename_a = "cuc_ieschool.aac";
 
 	av_register_all();
-	//输入（Input）
+	//Input
 	if ((ret = avformat_open_input(&ifmt_ctx, in_filename, 0, 0)) < 0) {
 		printf( "Could not open input file.");
 		goto end;
@@ -78,7 +77,7 @@ int main(int argc, char* argv[])
 		goto end;
 	}
 
-	//输出（Output）
+	//Output
 	avformat_alloc_output_context2(&ofmt_ctx_v, NULL, NULL, out_filename_v);
 	if (!ofmt_ctx_v) {
 		printf( "Could not create output context\n");
@@ -96,7 +95,7 @@ int main(int argc, char* argv[])
 	ofmt_a = ofmt_ctx_a->oformat;
 
 	for (i = 0; i < ifmt_ctx->nb_streams; i++) {
-			//根据输入流创建输出流（Create output AVStream according to input AVStream）
+			//Create output AVStream according to input AVStream
 			AVFormatContext *ofmt_ctx;
 			AVStream *in_stream = ifmt_ctx->streams[i];
 			AVStream *out_stream = NULL;
@@ -118,7 +117,7 @@ int main(int argc, char* argv[])
 				ret = AVERROR_UNKNOWN;
 				goto end;
 			}
-			//复制AVCodecContext的设置（Copy the settings of AVCodecContext）
+			//Copy the settings of AVCodecContext
 			if (avcodec_copy_context(out_stream->codec, in_stream->codec) < 0) {
 				printf( "Failed to copy context from input to output stream codec context\n");
 				goto end;
@@ -130,14 +129,14 @@ int main(int argc, char* argv[])
 	}
 
 	//Dump Format------------------
-	printf("\nInput Video===========================\n");
+	printf("\n==============Input Video=============\n");
 	av_dump_format(ifmt_ctx, 0, in_filename, 0);
-	printf("\nOutput Video==========================\n");
+	printf("\n==============Output Video============\n");
 	av_dump_format(ofmt_ctx_v, 0, out_filename_v, 1);
-	printf("\nOutput Audio==========================\n");
+	printf("\n==============Output Audio============\n");
 	av_dump_format(ofmt_ctx_a, 0, out_filename_a, 1);
 	printf("\n======================================\n");
-	//打开输出文件（Open output file）
+	//Open output file
 	if (!(ofmt_v->flags & AVFMT_NOFILE)) {
 		if (avio_open(&ofmt_ctx_v->pb, out_filename_v, AVIO_FLAG_WRITE) < 0) {
 			printf( "Could not open output file '%s'", out_filename_v);
@@ -152,7 +151,7 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	//写文件头（Write file header）
+	//Write file header
 	if (avformat_write_header(ofmt_ctx_v, NULL) < 0) {
 		printf( "Error occurred when opening video output file\n");
 		goto end;
@@ -169,7 +168,7 @@ int main(int argc, char* argv[])
 	while (1) {
 		AVFormatContext *ofmt_ctx;
 		AVStream *in_stream, *out_stream;
-		//获取一个AVPacket（Get an AVPacket）
+		//Get an AVPacket
 		if (av_read_frame(ifmt_ctx, &pkt) < 0)
 			break;
 		in_stream  = ifmt_ctx->streams[pkt.stream_index];
@@ -178,27 +177,26 @@ int main(int argc, char* argv[])
 		if(pkt.stream_index==videoindex){
 			out_stream = ofmt_ctx_v->streams[0];
 			ofmt_ctx=ofmt_ctx_v;
-			printf("Write Video Packet. size:%d\tpts:%d\n",pkt.size,pkt.pts);
+			printf("Write Video Packet. size:%d\tpts:%lld\n",pkt.size,pkt.pts);
 #if USE_H264BSF
 			av_bitstream_filter_filter(h264bsfc, in_stream->codec, NULL, &pkt.data, &pkt.size, pkt.data, pkt.size, 0);
 #endif
 		}else if(pkt.stream_index==audioindex){
 			out_stream = ofmt_ctx_a->streams[0];
 			ofmt_ctx=ofmt_ctx_a;
-			printf("Write Audio Packet. size:%d\tpts:%d\n",pkt.size,pkt.pts);
+			printf("Write Audio Packet. size:%d\tpts:%lld\n",pkt.size,pkt.pts);
 		}else{
 			continue;
 		}
 
 
-		/* copy packet */
-		//转换PTS/DTS（Convert PTS/DTS）
+		//Convert PTS/DTS
 		pkt.pts = av_rescale_q_rnd(pkt.pts, in_stream->time_base, out_stream->time_base, (AVRounding)(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 		pkt.dts = av_rescale_q_rnd(pkt.dts, in_stream->time_base, out_stream->time_base, (AVRounding)(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 		pkt.duration = av_rescale_q(pkt.duration, in_stream->time_base, out_stream->time_base);
 		pkt.pos = -1;
 		pkt.stream_index=0;
-		//写入（Write）
+		//Write
 		if (av_interleaved_write_frame(ofmt_ctx, &pkt) < 0) {
 			printf( "Error muxing packet\n");
 			break;
@@ -212,7 +210,7 @@ int main(int argc, char* argv[])
 	av_bitstream_filter_close(h264bsfc);  
 #endif
 
-	//写文件尾（Write file trailer）
+	//Write file trailer
 	av_write_trailer(ofmt_ctx_a);
 	av_write_trailer(ofmt_ctx_v);
 end:

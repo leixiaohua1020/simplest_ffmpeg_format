@@ -68,12 +68,12 @@ int main(int argc, char* argv[])
 	AVPacket pkt;
 	int ret, i;
 	int videoindex=-1,audioindex=-1;
-	char *in_filename  = "cuc_ieschool.flv";//输入文件名（Input file URL）
-	char *out_filename_v = "cuc_ieschool.h264";//输出文件名（Output file URL）
-	char *out_filename_a = "cuc_ieschool.mp3";
+	const char *in_filename  = "cuc_ieschool.flv";//Input file URL
+	const char *out_filename_v = "cuc_ieschool.h264";//Output file URL
+	const char *out_filename_a = "cuc_ieschool.mp3";
 
 	av_register_all();
-	//输入（Input）
+	//Input
 	if ((ret = avformat_open_input(&ifmt_ctx, in_filename, 0, 0)) < 0) {
 		printf( "Could not open input file.");
 		return -1;
@@ -115,7 +115,7 @@ int main(int argc, char* argv[])
 #if USE_H264BSF
 			av_bitstream_filter_filter(h264bsfc, ifmt_ctx->streams[videoindex]->codec, NULL, &pkt.data, &pkt.size, pkt.data, pkt.size, 0);
 #endif
-			printf("Write Video Packet. size:%d\tpts:%d\n",pkt.size,pkt.pts);
+			printf("Write Video Packet. size:%d\tpts:%lld\n",pkt.size,pkt.pts);
 			fwrite(pkt.data,1,pkt.size,fp_video);
 		}else if(pkt.stream_index==audioindex){
 			/*
@@ -123,7 +123,7 @@ int main(int argc, char* argv[])
 			ADTS Header in front of AVPacket data manually.
 			Other Audio Codec (MP3...) works well.
 			*/
-			printf("Write Audio Packet. size:%d\tpts:%d\n",pkt.size,pkt.pts);
+			printf("Write Audio Packet. size:%d\tpts:%lld\n",pkt.size,pkt.pts);
 			fwrite(pkt.data,1,pkt.size,fp_audio);
 		}
 		av_free_packet(&pkt);
